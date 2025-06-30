@@ -22,10 +22,20 @@ func (u *User) getCloseBy(ctx context.Context, s *Server) ([]CloseBy, error) {
 		return u.closeBy, nil
 	}
 
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
+	if !time.Now().After(u.closeByExpiresAt) && len(u.following) > 10 {
+		return u.closeBy, nil
+	}
+
 	var closeBy []CloseBy
 	if err := s.conn.Select(ctx, &closeBy, getCloseByQuery, u.did); err != nil {
 		return nil, err
 	}
+
+	u.closeByExpiresAt = time.Now().Add(1 * time.Hour)
+
 	return closeBy, nil
 }
 
