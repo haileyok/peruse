@@ -37,6 +37,7 @@ func (s *Server) handleFeedSkeleton(e echo.Context) error {
 	case s.args.ChronoFeedRkey:
 		return s.handleChronoFeed(e, req)
 	default:
+		s.logger.Warn("invalid feed requested", "requested-feed", req.Feed)
 		return helpers.InputError(e, "FeedNotFound", "")
 	}
 }

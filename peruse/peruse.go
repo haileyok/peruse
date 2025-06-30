@@ -15,6 +15,8 @@ import (
 	"github.com/haileyok/peruse/internal/helpers"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	slogecho "github.com/samber/slog-echo"
 	"golang.org/x/time/rate"
 )
 
@@ -50,6 +52,9 @@ func NewServer(args ServerArgs) (*Server, error) {
 	}
 
 	e := echo.New()
+	e.Use(middleware.RemoveTrailingSlash())
+	e.Use(slogecho.New(args.Logger))
+	e.Use(middleware.Recover())
 
 	httpd := &http.Server{
 		Addr:    args.HttpAddr,
