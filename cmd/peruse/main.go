@@ -59,7 +59,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:     "service-endpoint",
-				EnvVars:  []string{"PERSUSE_SERVICE_ENDPOINT"},
+				EnvVars:  []string{"PERUSE_SERVICE_ENDPOINT"},
 				Required: true,
 			},
 			&cli.StringFlag{
