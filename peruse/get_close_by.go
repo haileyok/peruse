@@ -6,14 +6,14 @@ import (
 )
 
 type CloseBy struct {
-	Did                   string `ch:"did"`
-	TheirLikes            int    `ch:"their_likes"`
-	MyLikes               int    `ch:"my_likes"`
-	TheirReplies          int    `ch:"their_replies"`
-	MyReplies             int    `ch:"my_replies"`
-	FriendConnectionScore int    `ch:"friend_connection_score"`
-	ClosenessScore        int    `ch:"closeness_score"`
-	InteractionType       int    `ch:"interaction_type"`
+	Did                   string  `ch:"did"`
+	TheirLikes            uint64  `ch:"their_likes"`
+	MyLikes               uint64  `ch:"my_likes"`
+	TheirReplies          uint64  `ch:"their_replies"`
+	MyReplies             uint64  `ch:"my_replies"`
+	FriendConnectionScore float64 `ch:"friend_connection_score"`
+	ClosenessScore        float64 `ch:"closeness_score"`
+	InteractionType       string  `ch:"interaction_type"`
 }
 
 func (u *User) getCloseBy(ctx context.Context, s *Server) ([]CloseBy, error) {
