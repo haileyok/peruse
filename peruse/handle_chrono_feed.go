@@ -33,11 +33,12 @@ func (s *Server) handleChronoFeed(e echo.Context, req FeedSkeletonRequest) error
 	if err := s.conn.Select(ctx, &posts, fmt.Sprintf(`
 		SELECT uri
 		FROM default.post
-		WHERE did IN (?)
-		AND rkey < ?
+		WHERE rkey < ?
+		AND did IN (?)
+		AND parent_uri = ''
 		ORDER BY created_at DESC
 		LIMIT 50
-		`), cbdids, req.Cursor); err != nil {
+		`), req.Cursor, cbdids); err != nil {
 		s.logger.Error("error getting close by chrono posts", "error", err)
 		return helpers.ServerError(e, "FeedError", "")
 	}
