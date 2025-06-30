@@ -33,7 +33,7 @@ func (s *Server) handleChronoFeed(e echo.Context, req FeedSkeletonRequest) error
 		SELECT uri
 		FROM default.post
 		WHERE did IN (?)
-		AND rkey < 
+		AND rkey < ?
 		ORDER BY created_at DESC
 		LIMIT 50
 		`), cbdids, req.Cursor); err != nil {
