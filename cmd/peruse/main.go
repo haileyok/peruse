@@ -12,6 +12,8 @@ import (
 
 	"net/http"
 	_ "net/http/pprof"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {

@@ -8,6 +8,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/haileyok/photocopy v0.0.0-20250630043251-10829c777ef4
 	github.com/hashicorp/golang-lru/v2 v2.0.7
+	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/urfave/cli/v2 v2.27.7
 	golang.org/x/time v0.11.0
