@@ -260,5 +260,5 @@ LEFT JOIN (
 
 WHERE all_dids.did IS NOT NULL
 ORDER BY closeness_score DESC
-LIMIT 200 
+LIMIT 1000 
 	`

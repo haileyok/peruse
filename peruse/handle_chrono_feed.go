@@ -2,6 +2,7 @@ package peruse
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/haileyok/peruse/internal/helpers"
 	"github.com/haileyok/photocopy/models"
@@ -46,15 +47,20 @@ func (s *Server) handleChronoFeed(e echo.Context, req FeedSkeletonRequest) error
 	}
 
 	var fpis []FeedPostItem
+	var cursor string
 
-	for _, p := range posts {
+	for i, p := range posts {
 		fpis = append(fpis, FeedPostItem{
 			Post: p.Uri,
 		})
+		if i == len(posts)-1 {
+			pts := strings.Split(p.Uri, "/")
+			cursor = pts[len(pts)-1]
+		}
 	}
 
 	return e.JSON(200, FeedSkeletonResponse{
-		Cursor: &posts[len(posts)-1].Rkey,
+		Cursor: &cursor,
 		Feed:   fpis,
 	})
 }
