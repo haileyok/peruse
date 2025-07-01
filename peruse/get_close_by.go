@@ -45,7 +45,7 @@ func (u *User) getCloseBy(ctx context.Context, s *Server) ([]CloseBy, error) {
 
 var getCloseByQuery = `
 WITH ? as your_did,
-    now() - interval 14 day AS timeframe,
+    now() - interval 90 day AS timeframe,
     ? as existing_connection_weight,
     ? as new_discovery_weight,
     ? as top_mutual_limit
