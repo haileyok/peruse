@@ -21,7 +21,7 @@ func (s *Server) handleChronoFeed(e echo.Context, req FeedSkeletonRequest) error
 
 	cbdids := []string{}
 	for _, cb := range closeBy {
-		cbdids = append(cbdids, cb.Did)
+		cbdids = append(cbdids, cb.SuggestedDid)
 	}
 	cbdids = cbdids[1:] // remove self
 
