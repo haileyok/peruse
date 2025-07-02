@@ -35,7 +35,7 @@ func (s *Server) handleGetSuggestedFollows(e echo.Context) error {
 	}
 
 	u := NewUser(req.Handle)
-	suggs, err := u.getSuggestedFollows(ctx, s)
+	suggs, err := u.getSuggestedFollows(ctx, s, req.ShowHandles)
 	if err != nil {
 		return e.String(400, fmt.Sprintf("error getting suggested follows: %v"))
 	}
