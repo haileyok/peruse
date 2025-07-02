@@ -12,6 +12,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/bluesky-social/indigo/atproto/identity"
+	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/haileyok/peruse/internal/helpers"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/labstack/echo/v4"
@@ -29,6 +30,7 @@ type Server struct {
 	keyCache    *lru.Cache[string, crypto.PublicKey]
 	directory   identity.Directory
 	userManager *UserManager
+	xrpc        *xrpc.Client
 }
 
 type ServerArgs struct {
@@ -97,6 +99,9 @@ func NewServer(args ServerArgs) (*Server, error) {
 		keyCache:    kc,
 		directory:   &dir,
 		userManager: NewUserManager(),
+		xrpc: &xrpc.Client{
+			Host: "https://public.api.bsky.app",
+		},
 	}, nil
 }
 
@@ -125,6 +130,7 @@ func (s *Server) addRoutes() {
 	s.echo.GET("/xrpc/app.bsky.feed.getFeedSkeleton", s.handleFeedSkeleton, s.handleAuthMiddleware)
 	s.echo.GET("/xrpc/app.bsky.feed.describeFeedGenerator", s.handleDescribeFeedGenerator)
 	s.echo.GET("/.well-known/did.json", s.handleWellKnown)
+	s.echo.GET("/api/getSuggestedFollows", s.handleGetSuggestedFollows)
 }
 
 func (s *Server) handleAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
