@@ -50,6 +50,9 @@ type User struct {
 
 	closeBy          []CloseBy
 	closeByExpiresAt time.Time
+
+	suggestedFollows          []SuggestedFollow
+	suggestedFollowsExpiresAt time.Time
 }
 
 func NewUser(did string) *User {

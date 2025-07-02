@@ -1,12 +1,12 @@
 package peruse
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/haileyok/peruse/internal/helpers"
-	"github.com/haileyok/photocopy/models"
 	"github.com/labstack/echo/v4"
+)
+
+const (
+	DefaultCursor = "9999999999999"
 )
 
 func (s *Server) handleChronoFeed(e echo.Context, req FeedSkeletonRequest) error {
@@ -26,19 +26,11 @@ func (s *Server) handleChronoFeed(e echo.Context, req FeedSkeletonRequest) error
 	cbdids = cbdids[1:] // remove self
 
 	if req.Cursor == "" {
-		req.Cursor = "9999999999999" // hack for simplicity...
+		req.Cursor = DefaultCursor // hack for simplicity...
 	}
 
-	var posts []models.Post
-	if err := s.conn.Select(ctx, &posts, fmt.Sprintf(`
-		SELECT uri
-		FROM default.post
-		WHERE rkey < ?
-		AND did IN (?)
-		AND parent_uri = ''
-		ORDER BY created_at DESC
-		LIMIT 50
-		`), req.Cursor, cbdids); err != nil {
+	posts, err := s.getPostsForDidsChronological(ctx, cbdids, req.Cursor)
+	if err != nil {
 		s.logger.Error("error getting close by chrono posts", "error", err)
 		return helpers.ServerError(e, "FeedError", "")
 	}
@@ -47,18 +39,7 @@ func (s *Server) handleChronoFeed(e echo.Context, req FeedSkeletonRequest) error
 		return helpers.ServerError(e, "FeedError", "Not enough posts")
 	}
 
-	var fpis []FeedPostItem
-	var cursor string
-
-	for i, p := range posts {
-		fpis = append(fpis, FeedPostItem{
-			Post: p.Uri,
-		})
-		if i == len(posts)-1 {
-			pts := strings.Split(p.Uri, "/")
-			cursor = pts[len(pts)-1]
-		}
-	}
+	fpis, cursor := modelPostsToFeedItems(posts)
 
 	return e.JSON(200, FeedSkeletonResponse{
 		Cursor: &cursor,

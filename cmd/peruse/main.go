@@ -69,6 +69,11 @@ func main() {
 				EnvVars:  []string{"PERUSE_CHRONO_FEED_RKEY"},
 				Required: true,
 			},
+			&cli.StringFlag{
+				Name:     "suggested-follows-rkey",
+				EnvVars:  []string{"PERUSE_SUGGESTED_FOLLOWS_RKEY"},
+				Required: true,
+			},
 		},
 		Action: run,
 	}
@@ -86,16 +91,17 @@ var run = func(cmd *cli.Context) error {
 	}))
 
 	server, err := peruse.NewServer(peruse.ServerArgs{
-		HttpAddr:           cmd.String("http-addr"),
-		ClickhouseAddr:     cmd.String("clickhouse-addr"),
-		ClickhouseDatabase: cmd.String("clickhouse-database"),
-		ClickhouseUser:     cmd.String("clickhouse-user"),
-		ClickhousePass:     cmd.String("clickhouse-pass"),
-		Logger:             logger,
-		FeedOwnerDid:       cmd.String("feed-owner-did"),
-		ServiceDid:         cmd.String("service-did"),
-		ServiceEndpoint:    cmd.String("service-endpoint"),
-		ChronoFeedRkey:     cmd.String("chrono-feed-rkey"),
+		HttpAddr:             cmd.String("http-addr"),
+		ClickhouseAddr:       cmd.String("clickhouse-addr"),
+		ClickhouseDatabase:   cmd.String("clickhouse-database"),
+		ClickhouseUser:       cmd.String("clickhouse-user"),
+		ClickhousePass:       cmd.String("clickhouse-pass"),
+		Logger:               logger,
+		FeedOwnerDid:         cmd.String("feed-owner-did"),
+		ServiceDid:           cmd.String("service-did"),
+		ServiceEndpoint:      cmd.String("service-endpoint"),
+		ChronoFeedRkey:       cmd.String("chrono-feed-rkey"),
+		SuggestedFollowsRkey: cmd.String("suggested-follows-rkey"),
 	})
 	if err != nil {
 		logger.Error("error creating server", "error", err)

@@ -32,16 +32,17 @@ type Server struct {
 }
 
 type ServerArgs struct {
-	Logger             *slog.Logger
-	HttpAddr           string
-	ClickhouseAddr     string
-	ClickhouseDatabase string
-	ClickhouseUser     string
-	ClickhousePass     string
-	FeedOwnerDid       string
-	ServiceDid         string
-	ServiceEndpoint    string
-	ChronoFeedRkey     string
+	Logger               *slog.Logger
+	HttpAddr             string
+	ClickhouseAddr       string
+	ClickhouseDatabase   string
+	ClickhouseUser       string
+	ClickhousePass       string
+	FeedOwnerDid         string
+	ServiceDid           string
+	ServiceEndpoint      string
+	ChronoFeedRkey       string
+	SuggestedFollowsRkey string
 }
 
 func NewServer(args ServerArgs) (*Server, error) {
