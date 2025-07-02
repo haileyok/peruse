@@ -9,7 +9,7 @@ func (s *Server) handleSuggestedFollowsFeed(e echo.Context, req FeedSkeletonRequ
 	ctx := e.Request().Context()
 	u := e.Get("user").(*User)
 
-	suggFollows, err := u.getCloseBy(ctx, s)
+	suggFollows, err := u.getSuggestedFollows(ctx, s)
 	if err != nil {
 		s.logger.Error("error getting suggested follows for user", "user", u.did, "error", err)
 		return helpers.ServerError(e, "FeedError", "")
