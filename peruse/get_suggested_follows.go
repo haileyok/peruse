@@ -28,8 +28,8 @@ func (u *User) getSuggestedFollows(ctx context.Context, s *Server) ([]SuggestedF
 		return nil, err
 	}
 
+	u.suggestedFollows = suggestedFollows
 	u.suggestedFollowsExpiresAt = time.Now().Add(1 * time.Hour)
-
 	return suggestedFollows, nil
 }
 
