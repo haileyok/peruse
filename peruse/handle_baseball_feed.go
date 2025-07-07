@@ -25,7 +25,7 @@ type BaseballPost struct {
 	LikeCt     uint64    `ch:"like_ct"`
 	Uri        string    `ch:"uri"`
 	CreatedAt  time.Time `ch:"created_at"`
-	HoursOld   uint64    `ch:"hours_old"`
+	HoursOld   int64     `ch:"hours_old"`
 	DecayScore float64   `ch:"decay_score"`
 }
 
