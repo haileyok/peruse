@@ -33,13 +33,19 @@ func (s *Server) handleFeedSkeleton(e echo.Context) error {
 		return helpers.InputError(e, "InvalidFeed", "")
 	}
 
-	switch aturi.RecordKey().String() {
-	case s.args.ChronoFeedRkey:
-		return s.handleChronoFeed(e, req)
-	case s.args.SuggestedFollowsRkey:
-		return s.handleSuggestedFollowsFeed(e, req)
-	default:
-		s.logger.Warn("invalid feed requested", "requested-feed", req.Feed)
-		return helpers.InputError(e, "FeedNotFound", "")
+	feed, exists := s.feeds[aturi.RecordKey().String()]
+	if !exists {
+		// TODO: refactor these feeds to work with addFeed
+		switch aturi.RecordKey().String() {
+		case s.args.ChronoFeedRkey:
+			return s.handleChronoFeed(e, req)
+		case s.args.SuggestedFollowsRkey:
+			return s.handleSuggestedFollowsFeed(e, req)
+		default:
+			s.logger.Warn("invalid feed requested", "requested-feed", req.Feed)
+			return helpers.InputError(e, "FeedNotFound", "")
+		}
 	}
+
+	return feed.HandleGetFeedSkeleton(e, req)
 }
