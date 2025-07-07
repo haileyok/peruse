@@ -3,6 +3,7 @@ package peruse
 import (
 	"context"
 	"crypto"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -31,6 +32,7 @@ type Server struct {
 	directory   identity.Directory
 	userManager *UserManager
 	xrpc        *xrpc.Client
+	feeds       map[string]Feed
 }
 
 type ServerArgs struct {
@@ -45,6 +47,11 @@ type ServerArgs struct {
 	ServiceEndpoint      string
 	ChronoFeedRkey       string
 	SuggestedFollowsRkey string
+}
+
+type Feed interface {
+	Name() string
+	HandleGetFeedSkeleton(e echo.Context, req FeedSkeletonRequest) error
 }
 
 func NewServer(args ServerArgs) (*Server, error) {
@@ -102,12 +109,15 @@ func NewServer(args ServerArgs) (*Server, error) {
 		xrpc: &xrpc.Client{
 			Host: "https://public.api.bsky.app",
 		},
+		feeds: map[string]Feed{},
 	}, nil
 }
 
 func (s *Server) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	s.addFeed(NewBaseballFeed(s))
 
 	s.addRoutes()
 
@@ -123,6 +133,15 @@ func (s *Server) Run(ctx context.Context) error {
 
 	s.conn.Close()
 
+	return nil
+}
+
+func (s *Server) addFeed(f Feed) error {
+	_, exists := s.feeds[f.Name()]
+	if exists {
+		return fmt.Errorf("feed %s already exists", f.Name())
+	}
+	s.feeds[f.Name()] = f
 	return nil
 }
 
@@ -152,4 +171,14 @@ func (s *Server) handleAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		return next(e)
 	}
+}
+
+func urisToFeedPostItems(uris []string) []FeedPostItem {
+	var pis []FeedPostItem
+	for _, u := range uris {
+		pis = append(pis, FeedPostItem{
+			Post: u,
+		})
+	}
+	return pis
 }
