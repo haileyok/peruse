@@ -118,6 +118,7 @@ func (s *Server) Run(ctx context.Context) error {
 	defer cancel()
 
 	s.addFeed(NewBaseballFeed(s))
+	s.addFeed(NewSeattleFeed(s))
 
 	s.addRoutes()
 

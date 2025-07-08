@@ -16,12 +16,12 @@ import (
 type BaseballFeed struct {
 	conn           driver.Conn
 	logger         *slog.Logger
-	cached         []BaseballPost
+	cached         []RankedFeedPost
 	cacheExpiresAt time.Time
 	mu             sync.RWMutex
 }
 
-type BaseballPost struct {
+type RankedFeedPost struct {
 	LikeCt     uint64    `ch:"like_ct"`
 	Uri        string    `ch:"uri"`
 	CreatedAt  time.Time `ch:"created_at"`
@@ -45,14 +45,10 @@ func (f *BaseballFeed) Name() string {
 func (f *BaseballFeed) HandleGetFeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
 	ctx := e.Request().Context()
 
-	cursor := time.Now()
-	if req.Cursor != "" {
-		maybeCursor, err := msToTime(req.Cursor)
-		if err != nil {
-			f.logger.Error("error getting time from cursor", "error", err)
-			return helpers.InputError(e, "InputError", "Invalid cursor for feed")
-		}
-		cursor = maybeCursor
+	cursor, err := getTimeBasedCursor(req)
+	if err != nil {
+		f.logger.Error("error getting cursor", "error", err)
+		return helpers.InputError(e, "FeedError", "Invalid cursor for feed")
 	}
 
 	posts, err := f.getPosts(ctx)
@@ -89,7 +85,7 @@ func (f *BaseballFeed) HandleGetFeedSkeleton(e echo.Context, req FeedSkeletonReq
 	})
 }
 
-func (f *BaseballFeed) getPosts(ctx context.Context) ([]BaseballPost, error) {
+func (f *BaseballFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
 	f.mu.RLock()
 	f.mu.RUnlock()
 	if f.cached != nil && time.Now().Before(f.cacheExpiresAt) {
@@ -103,7 +99,7 @@ func (f *BaseballFeed) getPosts(ctx context.Context) ([]BaseballPost, error) {
 		return f.cached, nil
 	}
 
-	var posts []BaseballPost
+	var posts []RankedFeedPost
 	if err := f.conn.Select(ctx, &posts, baseballQuery); err != nil {
 		return nil, err
 	}
@@ -134,3 +130,15 @@ GROUP BY bp.uri, bp.created_at
 ORDER BY decay_score DESC
 LIMIT 5000
 `
+
+func getTimeBasedCursor(req FeedSkeletonRequest) (time.Time, error) {
+	cursor := time.Now()
+	if req.Cursor != "" {
+		maybeCursor, err := msToTime(req.Cursor)
+		if err != nil {
+			return time.Time{}, fmt.Errorf("error getting time from cursor: %w", err)
+		}
+		cursor = maybeCursor
+	}
+	return cursor, nil
+}
