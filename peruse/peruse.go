@@ -16,6 +16,7 @@ import (
 	"github.com/bluesky-social/indigo/atproto/identity"
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/haileyok/peruse/internal/helpers"
+	"github.com/haileyok/peruse/wikidata"
 	"github.com/haileyok/photocopy/nervana"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/labstack/echo/v4"
@@ -60,7 +61,7 @@ type ServerArgs struct {
 type Feed interface {
 	Name() string
 	FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error
-	OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time) error
+	OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time, nerItems []nervana.NervanaItem) error
 	OnLike(ctx context.Context, like *bsky.FeedLike, uri, did, rkey, cid string, indexedAt time.Time) error
 	OnRepost(ctx context.Context, repost *bsky.FeedRepost, uri, did, rkey, cid string, indexedAt time.Time) error
 }
@@ -132,7 +133,12 @@ func (s *Server) Run(ctx context.Context) error {
 	defer cancel()
 
 	s.addFeed(NewBaseballFeed(s))
-	s.addFeed(NewSeattleFeed(ctx, s))
+	s.addFeed(NewCityAreaFeed(ctx, s, "seattle", "seattle_post", wikidata.SeattleEntities))
+	s.addFeed(NewCityAreaFeed(ctx, s, "los-angeles", "los_angeles_post", wikidata.LosAngelesEntities))
+	s.addFeed(NewCityAreaFeed(ctx, s, "san-francisco", "san_francisco_post", wikidata.SanFranciscoEntities))
+	s.addFeed(NewCityAreaFeed(ctx, s, "austin", "austin_post", wikidata.AustinEntities))
+	s.addFeed(NewCityAreaFeed(ctx, s, "chicago", "chicago_post", wikidata.ChicagoEntities))
+	s.addFeed(NewCityAreaFeed(ctx, s, "boston", "boston_post", wikidata.BostonEntities))
 
 	s.addRoutes()
 

@@ -18,7 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type SeattleFeed struct {
+type CityAreaFeed struct {
 	conn           driver.Conn
 	logger         *slog.Logger
 	cached         []RankedFeedPost
@@ -27,13 +27,15 @@ type SeattleFeed struct {
 	nervanaClient  *nervana.Client
 	entityIds      map[string]bool
 	inserter       *clickhouse_inserter.Inserter
+	feedName       string
+	tableName      string
 }
 
-func NewSeattleFeed(ctx context.Context, s *Server) *SeattleFeed {
-	logger := s.logger.With("feed", "seattle-feed")
+func NewCityAreaFeed(ctx context.Context, s *Server, feedName string, tableName string, entitiesJson string) *CityAreaFeed {
+	logger := s.logger.With("feed", feedName)
 
 	var entities []wikidata.Entity
-	if err := json.Unmarshal([]byte(wikidata.SeattleEntities), &entities); err != nil {
+	if err := json.Unmarshal([]byte(entitiesJson), &entities); err != nil {
 		panic(err)
 	}
 
@@ -55,27 +57,29 @@ func NewSeattleFeed(ctx context.Context, s *Server) *SeattleFeed {
 		BatchSize:               1,
 		Logger:                  s.logger,
 		Conn:                    s.conn,
-		Query:                   "INSERT INTO seattle_post (uri, created_at)",
+		Query:                   fmt.Sprintf("INSERT INTO %s (uri, created_at)", tableName),
 		RateLimit:               3,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	return &SeattleFeed{
+	return &CityAreaFeed{
 		conn:          s.conn,
 		logger:        logger,
 		nervanaClient: s.nervanaClient,
 		entityIds:     entitiyIds,
 		inserter:      inserter,
+		feedName:      feedName,
+		tableName:     tableName,
 	}
 }
 
-func (f *SeattleFeed) Name() string {
-	return "seattle"
+func (f *CityAreaFeed) Name() string {
+	return f.feedName
 }
 
-func (f *SeattleFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
+func (f *CityAreaFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
 	ctx := e.Request().Context()
 
 	cursor, err := getTimeBasedCursor(req)
@@ -121,18 +125,13 @@ type FeedDatabaseItem struct {
 	CreatedAt time.Time `ch:"created_at"`
 }
 
-func (f *SeattleFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time) error {
+func (f *CityAreaFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time, nerItems []nervana.NervanaItem) error {
 	if post.Reply != nil {
 		return nil
 	}
 
 	if post.Text == "" {
 		return nil
-	}
-
-	nerItems, err := f.nervanaClient.MakeRequest(ctx, post.Text)
-	if err != nil {
-		return err
 	}
 
 	for _, item := range nerItems {
@@ -151,15 +150,15 @@ func (f *SeattleFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did,
 	return nil
 }
 
-func (f *SeattleFeed) OnLike(ctx context.Context, like *bsky.FeedLike, uri, did, rkey, cid string, indexedAt time.Time) error {
+func (f *CityAreaFeed) OnLike(ctx context.Context, like *bsky.FeedLike, uri, did, rkey, cid string, indexedAt time.Time) error {
 	return nil
 }
 
-func (f *SeattleFeed) OnRepost(ctx context.Context, repost *bsky.FeedRepost, uri, did, rkey, cid string, indexedAt time.Time) error {
+func (f *CityAreaFeed) OnRepost(ctx context.Context, repost *bsky.FeedRepost, uri, did, rkey, cid string, indexedAt time.Time) error {
 	return nil
 }
 
-func (f *SeattleFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
+func (f *CityAreaFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
 	now := time.Now()
 	f.mu.RLock()
 	expiresAt := f.cacheExpiresAt
@@ -176,7 +175,7 @@ func (f *SeattleFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
 		return f.cached, nil
 	}
 
-	if err := f.conn.Select(ctx, &posts, seattleQuery); err != nil {
+	if err := f.conn.Select(ctx, &posts, makeCityQuery(f.tableName)); err != nil {
 		return nil, err
 	}
 	f.cached = posts
@@ -185,17 +184,19 @@ func (f *SeattleFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
 	return posts, nil
 }
 
-var seattleQuery = `
+func makeCityQuery(tableName string) string {
+	return fmt.Sprintf(`
 SELECT 
     count(*) as like_ct,
     sp.uri,
     sp.created_at,
     dateDiff('hour', sp.created_at, now()) as hours_old,
     count(*) * exp(-0.1 * dateDiff('hour', sp.created_at, now())) as decay_score
-FROM seattle_post sp 
+FROM %s sp 
 LEFT JOIN default.like_by_subject i ON sp.uri = i.subject_uri 
 WHERE sp.created_at > now() - INTERVAL 1 DAY 
 GROUP BY sp.uri, sp.created_at 
 ORDER BY decay_score DESC
 LIMIT 5000
-	`
+		`, tableName)
+}

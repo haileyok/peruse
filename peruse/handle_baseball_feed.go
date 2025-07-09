@@ -11,6 +11,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/bluesky-social/indigo/api/bsky"
 	"github.com/haileyok/peruse/internal/helpers"
+	"github.com/haileyok/photocopy/nervana"
 	"github.com/labstack/echo/v4"
 )
 
@@ -86,7 +87,7 @@ func (f *BaseballFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) err
 	})
 }
 
-func (f *BaseballFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time) error {
+func (f *BaseballFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time, nerItems []nervana.NervanaItem) error {
 	return nil
 }
 

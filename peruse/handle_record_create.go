@@ -9,6 +9,7 @@ import (
 	"github.com/araddon/dateparse"
 	"github.com/bluesky-social/indigo/api/bsky"
 	"github.com/bluesky-social/indigo/atproto/syntax"
+	"github.com/haileyok/photocopy/nervana"
 )
 
 func (s *Server) handleCreate(ctx context.Context, recb []byte, indexedAt, rev, did, collection, rkey, cid, seq string) error {
@@ -35,9 +36,21 @@ func (s *Server) handleCreatePost(ctx context.Context, rev string, recb []byte, 
 		return err
 	}
 
+	var nerItems []nervana.NervanaItem
+	if rec.Text != "" && rec.Reply == nil {
+		ctxWithTmt, cancel := context.WithTimeout(ctx, 5*time.Second)
+		maybeNerItems, err := s.nervanaClient.MakeRequest(ctxWithTmt, rec.Text)
+		if err != nil {
+			s.logger.Warn("unable to fetch ner items for post", "error", err)
+		} else {
+			nerItems = maybeNerItems
+		}
+		cancel()
+	}
+
 	for fname, f := range s.feeds {
 		go func() {
-			if err := f.OnPost(ctx, &rec, uri, did, rkey, cid, indexedAt); err != nil {
+			if err := f.OnPost(ctx, &rec, uri, did, rkey, cid, indexedAt, nerItems); err != nil {
 				s.logger.Error("error running on post", "feed", fname, "error", err)
 			}
 		}()
