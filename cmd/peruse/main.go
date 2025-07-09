@@ -84,6 +84,11 @@ func main() {
 				EnvVars:  []string{"PERUSE_NERVANA_API_KEY"},
 				Required: true,
 			},
+			&cli.StringFlag{
+				Name:    "relay-host",
+				EnvVars: []string{"PERUSE_RELAY_HOST"},
+				Value:   "wss://bsky.network",
+			},
 		},
 		Action: run,
 	}
@@ -114,6 +119,7 @@ var run = func(cmd *cli.Context) error {
 		SuggestedFollowsRkey: cmd.String("suggested-follows-rkey"),
 		NervanaEndpoint:      cmd.String("nervana-endpoint"),
 		NervanaApiKey:        cmd.String("nervana-api-key"),
+		RelayHost:            cmd.String("relay-host"),
 	})
 	if err != nil {
 		logger.Error("error creating server", "error", err)

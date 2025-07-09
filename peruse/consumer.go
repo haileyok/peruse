@@ -65,7 +65,7 @@ func (s *Server) startConsumer(ctx context.Context, cancel context.CancelFunc) e
 	s.logger.Info("connecting to relay", "url", u.String())
 
 	con, _, err := d.Dial(u.String(), http.Header{
-		"user-agent": []string{"photocopy/0.0.0"},
+		"user-agent": []string{"peruse/0.0.0"},
 	})
 	if err != nil {
 		return fmt.Errorf("failed to connect to relay: %w", err)

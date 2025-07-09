@@ -142,6 +142,12 @@ func (s *Server) Run(ctx context.Context) error {
 		}
 	}()
 
+	go func(ctx context.Context, cancel context.CancelFunc) {
+		if err := s.startConsumer(ctx, cancel); err != nil {
+			s.logger.Error("error starting consumer", "error", err)
+		}
+	}(ctx, cancel)
+
 	<-ctx.Done()
 
 	s.logger.Info("shutting down server...")
