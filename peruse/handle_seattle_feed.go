@@ -2,13 +2,19 @@ package peruse
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/bluesky-social/indigo/api/bsky"
 	"github.com/haileyok/peruse/internal/helpers"
+	"github.com/haileyok/peruse/wikidata"
+	"github.com/haileyok/photocopy/clickhouse_inserter"
+	"github.com/haileyok/photocopy/nervana"
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,13 +24,50 @@ type SeattleFeed struct {
 	cached         []RankedFeedPost
 	cacheExpiresAt time.Time
 	mu             sync.RWMutex
+	nervanaClient  *nervana.Client
+	entityIds      map[string]bool
+	inserter       *clickhouse_inserter.Inserter
 }
 
-func NewSeattleFeed(s *Server) *SeattleFeed {
+func NewSeattleFeed(ctx context.Context, s *Server) *SeattleFeed {
 	logger := s.logger.With("feed", "seattle-feed")
+
+	var entities []wikidata.Entity
+	if err := json.Unmarshal([]byte(wikidata.SeattleEntities), &entities); err != nil {
+		panic(err)
+	}
+
+	entitiyIds := map[string]bool{}
+	for _, e := range entities {
+		pts := strings.Split(e.Entity, "/")
+		if len(pts) == 0 {
+			continue
+		}
+		id := pts[len(pts)-1]
+		if !strings.HasPrefix("Q", id) {
+			continue
+		}
+		entitiyIds[id] = true
+	}
+
+	inserter, err := clickhouse_inserter.New(ctx, &clickhouse_inserter.Args{
+		PrometheusCounterPrefix: "photocopy_follows",
+		BatchSize:               1,
+		Logger:                  s.logger,
+		Conn:                    s.conn,
+		Query:                   "INSERT INTO seattle_post (uri, created_at)",
+		RateLimit:               3,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	return &SeattleFeed{
-		conn:   s.conn,
-		logger: logger,
+		conn:          s.conn,
+		logger:        logger,
+		nervanaClient: s.nervanaClient,
+		entityIds:     entitiyIds,
+		inserter:      inserter,
 	}
 }
 
@@ -32,7 +75,7 @@ func (f *SeattleFeed) Name() string {
 	return "seattle"
 }
 
-func (f *SeattleFeed) HandleGetFeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
+func (f *SeattleFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
 	ctx := e.Request().Context()
 
 	cursor, err := getTimeBasedCursor(req)
@@ -71,6 +114,49 @@ func (f *SeattleFeed) HandleGetFeedSkeleton(e echo.Context, req FeedSkeletonRequ
 		Feed:   items,
 		Cursor: &newCursor,
 	})
+}
+
+type FeedDatabaseItem struct {
+	Uri       string    `ch:"uri"`
+	CreatedAt time.Time `ch:"created_at"`
+}
+
+func (f *SeattleFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time) error {
+	if post.Reply != nil {
+		return nil
+	}
+
+	if post.Text == "" {
+		return nil
+	}
+
+	nerItems, err := f.nervanaClient.MakeRequest(ctx, post.Text)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range nerItems {
+		if f.entityIds[item.EntityId] {
+			fdi := FeedDatabaseItem{
+				Uri:       uri,
+				CreatedAt: indexedAt,
+			}
+			if err := f.inserter.Insert(ctx, fdi); err != nil {
+				return err
+			}
+			break
+		}
+	}
+
+	return nil
+}
+
+func (f *SeattleFeed) OnLike(ctx context.Context, like *bsky.FeedLike, uri, did, rkey, cid string, indexedAt time.Time) error {
+	return nil
+}
+
+func (f *SeattleFeed) OnRepost(ctx context.Context, repost *bsky.FeedRepost, uri, did, rkey, cid string, indexedAt time.Time) error {
+	return nil
 }
 
 func (f *SeattleFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {

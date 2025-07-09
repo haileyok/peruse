@@ -12,9 +12,11 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/bluesky-social/indigo/api/bsky"
 	"github.com/bluesky-social/indigo/atproto/identity"
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/haileyok/peruse/internal/helpers"
+	"github.com/haileyok/photocopy/nervana"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -23,16 +25,18 @@ import (
 )
 
 type Server struct {
-	httpd       *http.Server
-	echo        *echo.Echo
-	conn        driver.Conn
-	logger      *slog.Logger
-	args        *ServerArgs
-	keyCache    *lru.Cache[string, crypto.PublicKey]
-	directory   identity.Directory
-	userManager *UserManager
-	xrpc        *xrpc.Client
-	feeds       map[string]Feed
+	httpd         *http.Server
+	echo          *echo.Echo
+	conn          driver.Conn
+	logger        *slog.Logger
+	args          *ServerArgs
+	keyCache      *lru.Cache[string, crypto.PublicKey]
+	directory     identity.Directory
+	userManager   *UserManager
+	xrpc          *xrpc.Client
+	feeds         map[string]Feed
+	cursor        string
+	nervanaClient *nervana.Client
 }
 
 type ServerArgs struct {
@@ -47,11 +51,18 @@ type ServerArgs struct {
 	ServiceEndpoint      string
 	ChronoFeedRkey       string
 	SuggestedFollowsRkey string
+	CursorFile           string
+	RelayHost            string
+	NervanaEndpoint      string
+	NervanaApiKey        string
 }
 
 type Feed interface {
 	Name() string
-	HandleGetFeedSkeleton(e echo.Context, req FeedSkeletonRequest) error
+	FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error
+	OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time) error
+	OnLike(ctx context.Context, like *bsky.FeedLike, uri, did, rkey, cid string, indexedAt time.Time) error
+	OnRepost(ctx context.Context, repost *bsky.FeedRepost, uri, did, rkey, cid string, indexedAt time.Time) error
 }
 
 func NewServer(args ServerArgs) (*Server, error) {
@@ -97,6 +108,8 @@ func NewServer(args ServerArgs) (*Server, error) {
 
 	dir := identity.NewCacheDirectory(&baseDir, 100_000, time.Hour*48, time.Minute*15, time.Minute*15)
 
+	nervanaClient := nervana.NewClient(args.NervanaEndpoint, args.NervanaApiKey)
+
 	return &Server{
 		echo:        e,
 		httpd:       httpd,
@@ -109,7 +122,8 @@ func NewServer(args ServerArgs) (*Server, error) {
 		xrpc: &xrpc.Client{
 			Host: "https://public.api.bsky.app",
 		},
-		feeds: map[string]Feed{},
+		feeds:         map[string]Feed{},
+		nervanaClient: nervanaClient,
 	}, nil
 }
 
@@ -118,7 +132,7 @@ func (s *Server) Run(ctx context.Context) error {
 	defer cancel()
 
 	s.addFeed(NewBaseballFeed(s))
-	s.addFeed(NewSeattleFeed(s))
+	s.addFeed(NewSeattleFeed(ctx, s))
 
 	s.addRoutes()
 

@@ -47,5 +47,5 @@ func (s *Server) handleFeedSkeleton(e echo.Context) error {
 		}
 	}
 
-	return feed.HandleGetFeedSkeleton(e, req)
+	return feed.FeedSkeleton(e, req)
 }

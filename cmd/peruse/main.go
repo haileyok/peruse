@@ -74,6 +74,16 @@ func main() {
 				EnvVars:  []string{"PERUSE_SUGGESTED_FOLLOWS_RKEY"},
 				Required: true,
 			},
+			&cli.StringFlag{
+				Name:     "nervana-endpoint",
+				EnvVars:  []string{"PERUSE_NERVANA_ENDPOINT"},
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "nervana-api-key",
+				EnvVars:  []string{"PERUSE_NERVANA_API_KEY"},
+				Required: true,
+			},
 		},
 		Action: run,
 	}
@@ -102,6 +112,8 @@ var run = func(cmd *cli.Context) error {
 		ServiceEndpoint:      cmd.String("service-endpoint"),
 		ChronoFeedRkey:       cmd.String("chrono-feed-rkey"),
 		SuggestedFollowsRkey: cmd.String("suggested-follows-rkey"),
+		NervanaEndpoint:      cmd.String("nervana-endpoint"),
+		NervanaApiKey:        cmd.String("nervana-api-key"),
 	})
 	if err != nil {
 		logger.Error("error creating server", "error", err)

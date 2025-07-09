@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/bluesky-social/indigo/api/bsky"
 	"github.com/haileyok/peruse/internal/helpers"
 	"github.com/labstack/echo/v4"
 )
@@ -42,7 +43,7 @@ func (f *BaseballFeed) Name() string {
 	return "baseball"
 }
 
-func (f *BaseballFeed) HandleGetFeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
+func (f *BaseballFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
 	ctx := e.Request().Context()
 
 	cursor, err := getTimeBasedCursor(req)
@@ -83,6 +84,18 @@ func (f *BaseballFeed) HandleGetFeedSkeleton(e echo.Context, req FeedSkeletonReq
 		Feed:   items,
 		Cursor: &newCursor,
 	})
+}
+
+func (f *BaseballFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time) error {
+	return nil
+}
+
+func (f *BaseballFeed) OnLike(ctx context.Context, like *bsky.FeedLike, uri, did, rkey, cid string, indexedAt time.Time) error {
+	return nil
+}
+
+func (f *BaseballFeed) OnRepost(ctx context.Context, repost *bsky.FeedRepost, uri, did, rkey, cid string, indexedAt time.Time) error {
+	return nil
 }
 
 func (f *BaseballFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
