@@ -44,7 +44,7 @@ func NewSeattleFeed(ctx context.Context, s *Server) *SeattleFeed {
 			continue
 		}
 		id := pts[len(pts)-1]
-		if !strings.HasPrefix("Q", id) {
+		if !strings.HasPrefix(id, "Q") {
 			continue
 		}
 		entitiyIds[id] = true
