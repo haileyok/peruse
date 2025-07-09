@@ -76,8 +76,6 @@ github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 h1:EGx4pi6eqNxGa
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gorilla/websocket v1.5.1 h1:gmztn0JnHVt9JZquRuzLw3g4wouNVzKL15iLr/zn/QY=
 github.com/gorilla/websocket v1.5.1/go.mod h1:x3kM2JMyaluk02fnUJpQuwD2dCS5NDG2ZHL0uE0tcaY=
-github.com/haileyok/photocopy v0.0.0-20250630043251-10829c777ef4 h1:4SrZuwjrzC3PR3ayzPrv4K4m7fa8SGygre3qrx0wQe0=
-github.com/haileyok/photocopy v0.0.0-20250630043251-10829c777ef4/go.mod h1:U4EKU/HqQiO/dPQuOkjSu18Z9ch4F4rNIeANPp44P1s=
 github.com/haileyok/photocopy v0.0.0-20250708234122-0afc8c7838e1 h1:50dDAJFkhqe7LgpHtaZhfpLW+Q9kfvzxX30ehQCRlUg=
 github.com/haileyok/photocopy v0.0.0-20250708234122-0afc8c7838e1/go.mod h1:2/5JIKq3I+FWMF6YX91/zwk2g5eMG7b57/o4AH/LsPA=
 github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed h1:5upAirOpQc1Q53c0bnx2ufif5kANL7bfZWcc6VJWJd8=
