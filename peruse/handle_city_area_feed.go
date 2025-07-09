@@ -53,7 +53,7 @@ func NewCityAreaFeed(ctx context.Context, s *Server, feedName string, tableName 
 	}
 
 	inserter, err := clickhouse_inserter.New(ctx, &clickhouse_inserter.Args{
-		PrometheusCounterPrefix: "photocopy_follows",
+		PrometheusCounterPrefix: "peruse_city_area_" + feedName,
 		BatchSize:               1,
 		Logger:                  s.logger,
 		Conn:                    s.conn,
