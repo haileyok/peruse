@@ -133,12 +133,13 @@ func (s *Server) Run(ctx context.Context) error {
 	defer cancel()
 
 	s.addFeed(NewBaseballFeed(s))
-	s.addFeed(NewCityAreaFeed(ctx, s, "seattle", "seattle_post", wikidata.SeattleEntities))
-	s.addFeed(NewCityAreaFeed(ctx, s, "los-angeles", "los_angeles_post", wikidata.LosAngelesEntities))
-	s.addFeed(NewCityAreaFeed(ctx, s, "san-francisco", "san_francisco_post", wikidata.SanFranciscoEntities))
-	s.addFeed(NewCityAreaFeed(ctx, s, "austin", "austin_post", wikidata.AustinEntities))
-	s.addFeed(NewCityAreaFeed(ctx, s, "chicago", "chicago_post", wikidata.ChicagoEntities))
-	s.addFeed(NewCityAreaFeed(ctx, s, "boston", "boston_post", wikidata.BostonEntities))
+	s.addFeed(NewWikidataFeed(ctx, s, "seattle", "seattle_post", wikidata.SeattleEntities))
+	s.addFeed(NewWikidataFeed(ctx, s, "los-angeles", "los_angeles_post", wikidata.LosAngelesEntities))
+	s.addFeed(NewWikidataFeed(ctx, s, "san-francisco", "san_francisco_post", wikidata.SanFranciscoEntities))
+	s.addFeed(NewWikidataFeed(ctx, s, "austin", "austin_post", wikidata.AustinEntities))
+	s.addFeed(NewWikidataFeed(ctx, s, "chicago", "chicago_post", wikidata.ChicagoEntities))
+	s.addFeed(NewWikidataFeed(ctx, s, "boston", "boston_post", wikidata.BostonEntities))
+	s.addFeed(NewWikidataFeed(ctx, s, "software", "software_post", wikidata.SoftwareEntities))
 
 	s.addRoutes()
 

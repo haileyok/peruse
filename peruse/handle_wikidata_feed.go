@@ -18,7 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type CityAreaFeed struct {
+type WikidataFeed struct {
 	conn           driver.Conn
 	logger         *slog.Logger
 	cached         []RankedFeedPost
@@ -31,7 +31,7 @@ type CityAreaFeed struct {
 	tableName      string
 }
 
-func NewCityAreaFeed(ctx context.Context, s *Server, feedName string, tableName string, entitiesJson string) *CityAreaFeed {
+func NewWikidataFeed(ctx context.Context, s *Server, feedName string, tableName string, entitiesJson string) *WikidataFeed {
 	logger := s.logger.With("feed", feedName)
 
 	var entities []wikidata.Entity
@@ -53,7 +53,7 @@ func NewCityAreaFeed(ctx context.Context, s *Server, feedName string, tableName 
 	}
 
 	inserter, err := clickhouse_inserter.New(ctx, &clickhouse_inserter.Args{
-		PrometheusCounterPrefix: "peruse_city_area_" + feedName,
+		PrometheusCounterPrefix: "peruse_wikidata_" + feedName,
 		BatchSize:               1,
 		Logger:                  s.logger,
 		Conn:                    s.conn,
@@ -64,7 +64,7 @@ func NewCityAreaFeed(ctx context.Context, s *Server, feedName string, tableName 
 		panic(err)
 	}
 
-	return &CityAreaFeed{
+	return &WikidataFeed{
 		conn:          s.conn,
 		logger:        logger,
 		nervanaClient: s.nervanaClient,
@@ -75,11 +75,11 @@ func NewCityAreaFeed(ctx context.Context, s *Server, feedName string, tableName 
 	}
 }
 
-func (f *CityAreaFeed) Name() string {
+func (f *WikidataFeed) Name() string {
 	return f.feedName
 }
 
-func (f *CityAreaFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
+func (f *WikidataFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
 	ctx := e.Request().Context()
 
 	cursor, err := getTimeBasedCursor(req)
@@ -125,7 +125,7 @@ type FeedDatabaseItem struct {
 	CreatedAt time.Time `ch:"created_at"`
 }
 
-func (f *CityAreaFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time, nerItems []nervana.NervanaItem) error {
+func (f *WikidataFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did, rkey, cid string, indexedAt time.Time, nerItems []nervana.NervanaItem) error {
 	if post.Reply != nil {
 		return nil
 	}
@@ -150,15 +150,15 @@ func (f *CityAreaFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did
 	return nil
 }
 
-func (f *CityAreaFeed) OnLike(ctx context.Context, like *bsky.FeedLike, uri, did, rkey, cid string, indexedAt time.Time) error {
+func (f *WikidataFeed) OnLike(ctx context.Context, like *bsky.FeedLike, uri, did, rkey, cid string, indexedAt time.Time) error {
 	return nil
 }
 
-func (f *CityAreaFeed) OnRepost(ctx context.Context, repost *bsky.FeedRepost, uri, did, rkey, cid string, indexedAt time.Time) error {
+func (f *WikidataFeed) OnRepost(ctx context.Context, repost *bsky.FeedRepost, uri, did, rkey, cid string, indexedAt time.Time) error {
 	return nil
 }
 
-func (f *CityAreaFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
+func (f *WikidataFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
 	now := time.Now()
 	f.mu.RLock()
 	expiresAt := f.cacheExpiresAt
