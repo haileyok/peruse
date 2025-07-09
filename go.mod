@@ -8,7 +8,7 @@ require (
 	github.com/bluesky-social/indigo v0.0.0-20250626183556-5641d3c27325
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/gorilla/websocket v1.5.1
-	github.com/haileyok/photocopy v0.0.0-20250708234122-0afc8c7838e1
+	github.com/haileyok/photocopy v0.0.0-20250709003041-7f0cf2b969e3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/ipfs/go-cid v0.5.0
 	github.com/joho/godotenv v1.5.1
