@@ -83,6 +83,7 @@ func (f *WikidataFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) err
 	ctx := e.Request().Context()
 
 	cursor, err := getTimeBasedCursor(req)
+	fmt.Println("cursor:", cursor.Format(time.RFC3339Nano))
 	if err != nil {
 		f.logger.Error("error getting cursor", "error", err)
 		return helpers.InputError(e, "FeedError", "Invalid cursor for feed")
@@ -95,6 +96,7 @@ func (f *WikidataFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) err
 	}
 
 	for i, p := range posts {
+		fmt.Println(p.CreatedAt.Format(time.RFC3339Nano))
 		if p.CreatedAt.Before(cursor) {
 			posts = posts[i:]
 			break
