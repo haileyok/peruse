@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -89,15 +88,14 @@ func (f *WikidataFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) err
 		return helpers.InputError(e, "FeedError", "Invalid cursor for feed")
 	}
 
-	allPosts, err := f.getPosts(ctx)
+	posts, err := f.getPosts(ctx)
 	if err != nil {
 		f.logger.Error("error getting posts", "error", err)
 		return helpers.ServerError(e, "FeedError", "Unable to get posts for feed")
 	}
-	posts := slices.Clone(allPosts)
 
 	for i, p := range posts {
-		if p.CreatedAt.Before(cursor) {
+		if p.CreatedAt == cursor {
 			posts = posts[i:]
 			break
 		}
