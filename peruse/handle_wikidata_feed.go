@@ -96,11 +96,7 @@ func (f *WikidataFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) err
 
 	for i, p := range posts {
 		if p.CreatedAt.Before(cursor) {
-			toAdd := 30
-			if len(posts) < toAdd+i {
-				toAdd = len(posts) - i
-			}
-			posts = posts[i+toAdd:]
+			posts = posts[i:]
 			break
 		}
 	}
