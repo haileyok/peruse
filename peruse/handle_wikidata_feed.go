@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -82,10 +83,13 @@ func (f *WikidataFeed) Name() string {
 func (f *WikidataFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) error {
 	ctx := e.Request().Context()
 
-	cursor, err := getTimeBasedCursor(req)
-	if err != nil {
-		f.logger.Error("error getting cursor", "error", err)
-		return helpers.InputError(e, "FeedError", "Invalid cursor for feed")
+	var cursor int
+	if req.Cursor != "" {
+		cursor64, err := strconv.ParseInt(req.Cursor, 10, 32)
+		if err != nil {
+			f.logger.Error("error converting cursor", "error", err)
+		}
+		cursor = int(cursor64)
 	}
 
 	posts, err := f.getPosts(ctx)
@@ -94,12 +98,11 @@ func (f *WikidataFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) err
 		return helpers.ServerError(e, "FeedError", "Unable to get posts for feed")
 	}
 
-	for i, p := range posts {
-		if p.CreatedAt == cursor {
-			posts = posts[i:]
-			break
-		}
+	if len(posts) < cursor {
+		cursor = len(posts)
 	}
+
+	posts = posts[cursor:]
 
 	if len(posts) > 30 {
 		posts = posts[:30]
@@ -112,7 +115,7 @@ func (f *WikidataFeed) FeedSkeleton(e echo.Context, req FeedSkeletonRequest) err
 		})
 	}
 
-	newCursor := fmt.Sprintf("%d", posts[len(posts)-1].CreatedAt.UnixMilli())
+	newCursor := fmt.Sprintf("%d", cursor+len(posts))
 
 	return e.JSON(200, FeedSkeletonResponse{
 		Feed:   items,
