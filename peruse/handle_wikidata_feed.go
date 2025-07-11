@@ -182,7 +182,7 @@ func (f *WikidataFeed) getPosts(ctx context.Context) ([]RankedFeedPost, error) {
 		return nil, err
 	}
 	f.cached = posts
-	f.cacheExpiresAt = now
+	f.cacheExpiresAt = now.Add(1 * time.Minute)
 
 	return posts, nil
 }
