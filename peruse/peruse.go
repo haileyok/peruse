@@ -132,7 +132,6 @@ func (s *Server) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	s.addFeed(NewBaseballFeed(s))
 	s.addFeed(NewWikidataFeed(ctx, s, "seattle", "seattle_post", wikidata.SeattleEntities))
 	s.addFeed(NewWikidataFeed(ctx, s, "los-angeles", "los_angeles_post", wikidata.LosAngelesEntities))
 	s.addFeed(NewWikidataFeed(ctx, s, "san-francisco", "san_francisco_post", wikidata.SanFranciscoEntities))
@@ -140,6 +139,7 @@ func (s *Server) Run(ctx context.Context) error {
 	s.addFeed(NewWikidataFeed(ctx, s, "chicago", "chicago_post", wikidata.ChicagoEntities))
 	s.addFeed(NewWikidataFeed(ctx, s, "boston", "boston_post", wikidata.BostonEntities))
 	s.addFeed(NewWikidataFeed(ctx, s, "software", "software_post", wikidata.SoftwareEntities))
+	s.addFeed(NewWikidataFeed(ctx, s, "baseball", "baseball_post", wikidata.BaseballEntities))
 
 	s.addRoutes()
 

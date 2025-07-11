@@ -32,6 +32,14 @@ type WikidataFeed struct {
 	tableName      string
 }
 
+type RankedFeedPost struct {
+	LikeCt     uint64    `ch:"like_ct"`
+	Uri        string    `ch:"uri"`
+	CreatedAt  time.Time `ch:"created_at"`
+	HoursOld   int64     `ch:"hours_old"`
+	DecayScore float64   `ch:"decay_score"`
+}
+
 func NewWikidataFeed(ctx context.Context, s *Server, feedName string, tableName string, entitiesJson string) *WikidataFeed {
 	logger := s.logger.With("feed", feedName)
 
