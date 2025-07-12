@@ -61,7 +61,7 @@ func NewWikidataFeed(ctx context.Context, s *Server, feedName string, tableName 
 		if len(propertyPts) == 0 {
 			continue
 		}
-		propertyId := entityPts[len(propertyPts)-1]
+		propertyId := propertyPts[len(propertyPts)-1]
 
 		instanceOfPts := strings.Split(e.InstanceOf, "/")
 		if len(instanceOfPts) == 0 {
