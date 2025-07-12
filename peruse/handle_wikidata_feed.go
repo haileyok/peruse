@@ -56,27 +56,18 @@ func NewWikidataFeed(ctx context.Context, s *Server, feedName string, tableName 
 			continue
 		}
 		entityId := entityPts[len(entityPts)-1]
-		if !strings.HasPrefix(entityId, "Q") {
-			continue
-		}
 
 		propertyPts := strings.Split(e.Property, "/")
 		if len(propertyPts) == 0 {
 			continue
 		}
-		propertyId := entityPts[len(entityPts)-1]
-		if !strings.HasPrefix(propertyId, "P") {
-			continue
-		}
+		propertyId := entityPts[len(propertyPts)-1]
 
 		instanceOfPts := strings.Split(e.InstanceOf, "/")
 		if len(instanceOfPts) == 0 {
 			continue
 		}
 		instanceOfId := entityPts[len(instanceOfPts)-1]
-		if !strings.HasPrefix(instanceOfId, "Q") {
-			continue
-		}
 
 		entities[entityId] = wikidata.Entity{
 			Entity:     entityId,
