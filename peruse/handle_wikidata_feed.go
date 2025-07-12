@@ -26,7 +26,7 @@ type WikidataFeed struct {
 	cacheExpiresAt time.Time
 	mu             sync.RWMutex
 	nervanaClient  *nervana.Client
-	entityIds      map[string]bool
+	entities       map[string]wikidata.Entity
 	inserter       *clickhouse_inserter.Inserter
 	feedName       string
 	tableName      string
@@ -43,22 +43,46 @@ type RankedFeedPost struct {
 func NewWikidataFeed(ctx context.Context, s *Server, feedName string, tableName string, entitiesJson string) *WikidataFeed {
 	logger := s.logger.With("feed", feedName)
 
-	var entities []wikidata.Entity
-	if err := json.Unmarshal([]byte(entitiesJson), &entities); err != nil {
+	// TODO: just make this the `Unmarshal` of the `wikidata.Entity` struct
+	var entitiesArr []wikidata.Entity
+	if err := json.Unmarshal([]byte(entitiesJson), &entitiesArr); err != nil {
 		panic(err)
 	}
 
-	entitiyIds := map[string]bool{}
-	for _, e := range entities {
-		pts := strings.Split(e.Entity, "/")
-		if len(pts) == 0 {
+	entities := map[string]wikidata.Entity{}
+	for _, e := range entitiesArr {
+		entityPts := strings.Split(e.Entity, "/")
+		if len(entityPts) == 0 {
 			continue
 		}
-		id := pts[len(pts)-1]
-		if !strings.HasPrefix(id, "Q") {
+		entityId := entityPts[len(entityPts)-1]
+		if !strings.HasPrefix(entityId, "Q") {
 			continue
 		}
-		entitiyIds[id] = true
+
+		propertyPts := strings.Split(e.Property, "/")
+		if len(propertyPts) == 0 {
+			continue
+		}
+		propertyId := entityPts[len(entityPts)-1]
+		if !strings.HasPrefix(propertyId, "P") {
+			continue
+		}
+
+		instanceOfPts := strings.Split(e.InstanceOf, "/")
+		if len(instanceOfPts) == 0 {
+			continue
+		}
+		instanceOfId := entityPts[len(instanceOfPts)-1]
+		if !strings.HasPrefix(instanceOfId, "Q") {
+			continue
+		}
+
+		entities[entityId] = wikidata.Entity{
+			Entity:     entityId,
+			Property:   propertyId,
+			InstanceOf: instanceOfId,
+		}
 	}
 
 	inserter, err := clickhouse_inserter.New(ctx, &clickhouse_inserter.Args{
@@ -77,7 +101,7 @@ func NewWikidataFeed(ctx context.Context, s *Server, feedName string, tableName 
 		conn:          s.conn,
 		logger:        logger,
 		nervanaClient: s.nervanaClient,
-		entityIds:     entitiyIds,
+		entities:      entities,
 		inserter:      inserter,
 		feedName:      feedName,
 		tableName:     tableName,
@@ -145,16 +169,13 @@ func (f *WikidataFeed) OnPost(ctx context.Context, post *bsky.FeedPost, uri, did
 		return nil
 	}
 
-	for _, item := range nerItems {
-		if f.entityIds[item.EntityId] {
-			fdi := FeedDatabaseItem{
-				Uri:       uri,
-				CreatedAt: indexedAt,
-			}
-			if err := f.inserter.Insert(ctx, fdi); err != nil {
-				return err
-			}
-			break
+	if wikidata.ShouldInclude(ctx, f.entities, nerItems) {
+		fdi := FeedDatabaseItem{
+			Uri:       uri,
+			CreatedAt: indexedAt,
+		}
+		if err := f.inserter.Insert(ctx, fdi); err != nil {
+			return err
 		}
 	}
 
