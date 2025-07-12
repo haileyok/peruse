@@ -67,7 +67,7 @@ func NewWikidataFeed(ctx context.Context, s *Server, feedName string, tableName 
 		if len(instanceOfPts) == 0 {
 			continue
 		}
-		instanceOfId := entityPts[len(instanceOfPts)-1]
+		instanceOfId := instanceOfPts[len(instanceOfPts)-1]
 
 		entities[entityId] = wikidata.Entity{
 			Entity:     entityId,
