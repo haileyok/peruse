@@ -7,7 +7,5 @@ type Entity struct {
 }
 
 const (
-	PropertyId = "Q5"
-
-	EntityIdHuman = "Q809898"
+	EntityIdHuman = "Q5"
 )
